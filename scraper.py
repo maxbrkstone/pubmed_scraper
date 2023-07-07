@@ -172,7 +172,7 @@ def main():
     keywords = input("Enter keywords (comma-separated): ")
     journal = input("Enter journal name (optional): ")
     terms = input("Enter search term limit (optional): ")
-    filename = input("Enter filename for excel file (articles.xlsx by default): ") 
+    filename = input("Enter filename for excel file ('articles' by default): ") 
 
     if not keywords and not journal:
         print("Must provide at least one keyword or a journal name to search.")
