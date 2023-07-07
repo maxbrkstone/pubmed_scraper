@@ -109,7 +109,7 @@ def search_pubmed(keywords=None, journal=None, terms=None):
     
     return articles
 
-def export_to_excel(keywords, articles):
+def export_to_excel(keywords, articles, filename="articles"):
    # Create an Excel workbook
     wb = Workbook()
 
@@ -164,14 +164,15 @@ def export_to_excel(keywords, articles):
             ])
 
     # Save the workbook
-    wb.save("articles.xlsx")
-    print("Articles exported to articles.xlsx")
+    wb.save(filename + ".xlsx")
+    print("Articles exported to " + filename + ".xlsx")
 
 def main():
     # Prompt the user for search criteria
     keywords = input("Enter keywords (comma-separated): ")
     journal = input("Enter journal name (optional): ")
     terms = input("Enter search term limit (optional): ")
+    filename = input("Enter filename for excel file (articles.xlsx by default): ") 
 
     if not keywords and not journal:
         print("Must provide at least one keyword or a journal name to search.")
@@ -185,7 +186,7 @@ def main():
     articles = search_pubmed(keywords_list, journal, terms)
 
     # Export articles to Excel
-    export_to_excel(keywords_list, articles)
+    export_to_excel(keywords_list, articles, filename)
 
 if __name__ == "__main__":
     main()
