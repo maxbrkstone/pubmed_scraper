@@ -109,7 +109,7 @@ def search_pubmed(keywords=None, journal=None, terms=None):
     
     return articles
 
-def export_to_excel(keywords, articles, filename="articles"):
+def export_to_excel(keywords, articles, filename):
    # Create an Excel workbook
     wb = Workbook()
 
@@ -164,6 +164,9 @@ def export_to_excel(keywords, articles, filename="articles"):
             ])
 
     # Save the workbook
+    if filename.isspace() or filename == "":
+        filename = "articles"
+
     wb.save(filename + ".xlsx")
     print("Articles exported to " + filename + ".xlsx")
 
