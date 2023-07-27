@@ -23,9 +23,9 @@ def search_pubmed(keywords=None, journal=None, terms=None):
 
             # Construct the query for PubMed
             if journal:
-                query = f'{query_keyword} AND ({journal}[Journal]) AND (("clinical trial"[Publication Type]) OR ("journal article"[Publication Type]) OR ("clinical study"[Publication Type]))'
+                query = f'{query_keyword} AND ({journal}[Journal]) AND (("clinical trial"[Publication Type]) OR ("journal article"[Publication Type]) OR ("clinical study"[Publication Type])) NOT ("comment"[Publication Type])'
             else:
-                query = f'{query_keyword} AND (("clinical trial"[Publication Type]) OR ("journal article"[Publication Type]) OR ("clinical study"[Publication Type]))'
+                query = f'{query_keyword} AND (("clinical trial"[Publication Type]) OR ("journal article"[Publication Type]) OR ("clinical study"[Publication Type])) NOT ("comment"[Publication Type])'
 
             # Try to perform the search
             try:
@@ -54,10 +54,11 @@ def search_pubmed(keywords=None, journal=None, terms=None):
                     
                     if 'AuthorList' in fetch_record['MedlineCitation']['Article']:
                         if all('LastName' in author and 'ForeName' in author for author in fetch_record['MedlineCitation']['Article']['AuthorList']):
-                            article["Authors"] = [
-                                author['LastName'] + ', ' + author['ForeName']
-                                for author in fetch_record['MedlineCitation']['Article']['AuthorList']
-                            ]
+                            article["FirstAuthor"] = {'LastName' : fetch_record['MedlineCitation']['Article']['AuthorList'][0]['LastName'],
+                                                    'FirstName' : fetch_record['MedlineCitation']['Article']['AuthorList'][0]['ForeName']}
+                        
+                            article["LastAuthor"] = {'LastName' : fetch_record['MedlineCitation']['Article']['AuthorList'][-1]['LastName'],
+                                                    'FirstName' : fetch_record['MedlineCitation']['Article']['AuthorList'][-1]['ForeName']}
                             
                             if 'Year' in fetch_record['MedlineCitation']['Article']['Journal']['JournalIssue']['PubDate']:
                                 article["Year"] = fetch_record['MedlineCitation']['Article']['Journal']['JournalIssue']['PubDate']['Year']
@@ -65,6 +66,8 @@ def search_pubmed(keywords=None, journal=None, terms=None):
                                 article["Year"] = fetch_record['MedlineCitation']['Article']['Journal']['JournalIssue']['PubDate']['MedlineDate'][0:4]
                             elif(fetch_record['MedlineCitation']['Article']['ArticleDate']):
                                 article["Year"] = fetch_record['MedlineCitation']['Article']['ArticleDate'][0]['Year']
+                            else:
+                                continue
 
                             #add matched keyword to article
                             article["Keyword"] = keyword
@@ -73,7 +76,7 @@ def search_pubmed(keywords=None, journal=None, terms=None):
 
     elif journal:
         # Perform the search
-        query = f'({journal}[Journal]) AND (("clinical trial"[Publication Type]) OR ("journal article"[Publication Type]) OR ("clinical study"[Publication Type]))'
+        query = f'({journal}[Journal]) AND (("clinical trial"[Publication Type]) OR ("journal article"[Publication Type]) OR ("clinical study"[Publication Type])) NOT ("comment"[Publication Type])'
 
         handle = Entrez.esearch(db="pubmed", term=query, retmax=max_terms, datetype='pdat', mindate='2000/01/01', maxdate='2023/01/01') #FIXME: dates not working
         record = Entrez.read(handle)
@@ -93,17 +96,20 @@ def search_pubmed(keywords=None, journal=None, terms=None):
                 
                 if 'AuthorList' in fetch_record['MedlineCitation']['Article']:
                     if all('LastName' in author and 'ForeName' in author for author in fetch_record['MedlineCitation']['Article']['AuthorList']):
-                        article["Authors"] = [
-                            author['LastName'] + ', ' + author['ForeName']
-                            for author in fetch_record['MedlineCitation']['Article']['AuthorList']
-                        ]
+                        article["FirstAuthor"] = {'LastName' : fetch_record['MedlineCitation']['Article']['AuthorList'][0]['LastName'],
+                                                    'FirstName' : fetch_record['MedlineCitation']['Article']['AuthorList'][0]['ForeName']}
                         
+                        article["LastAuthor"] = {'LastName' : fetch_record['MedlineCitation']['Article']['AuthorList'][-1]['LastName'],
+                                                    'FirstName' : fetch_record['MedlineCitation']['Article']['AuthorList'][-1]['ForeName']}
+
                         if 'Year' in fetch_record['MedlineCitation']['Article']['Journal']['JournalIssue']['PubDate']:
                             article["Year"] = fetch_record['MedlineCitation']['Article']['Journal']['JournalIssue']['PubDate']['Year']
                         elif 'MedlineDate' in fetch_record['MedlineCitation']['Article']['Journal']['JournalIssue']['PubDate']:
                             article["Year"] = fetch_record['MedlineCitation']['Article']['Journal']['JournalIssue']['PubDate']['MedlineDate'][0:4]
                         elif(fetch_record['MedlineCitation']['Article']['ArticleDate']):
                             article["Year"] = fetch_record['MedlineCitation']['Article']['ArticleDate'][0]['Year']
+                        else:
+                            continue
 
                         articles.append(article)
     
@@ -125,20 +131,23 @@ def export_to_excel(keywords, articles, filename):
                 else:
                     ws = wb.create_sheet(title=keyword[0:31])
                 # Write the header row
-                ws.append(["Year", "First Author", "Last Author", "PMID"])
+                ws.append(["Year", "1st Author First Name", "1st Author Last Name", "Last Author First Name" "Last Author Last Name", "PMID"])
                 keyword_articles[keyword] = ws
             else:
                 ws = keyword_articles[keyword]
 
-            authors = article["Authors"]
-            first_author = authors[0]
-            last_author = authors[-1]
+            first_author_fn = article["FirstAuthor"]["FirstName"]
+            first_author_ln = article["FirstAuthor"]["LastName"]
+            last_author_fn = article["LastAuthor"]["FirstName"]
+            last_author_ln = article["LastAuthor"]["LastName"]
 
             # Write the article details to the corresponding sheet
             ws.append([
                 article["Year"],
-                first_author,
-                last_author,
+                first_author_fn,
+                first_author_ln,
+                last_author_fn,
+                last_author_ln,
                 article["PMID"]
             ])
 
@@ -148,18 +157,22 @@ def export_to_excel(keywords, articles, filename):
         ws = wb.active
 
         # Write the header row
-        ws.append(["Year", "First Author", "Last Author", "PMID"])
+        ws.append(["Year", "1st Author First Name", "1st Author Last Name", "Last Author First Name" "Last Author Last Name", "PMID"])
 
         # Write the article details
         for article in articles:
-            authors = article["Authors"]
-            first_author = authors[0]
-            last_author = authors[-1]
+            first_author_fn = article["FirstAuthor"]["FirstName"]
+            first_author_ln = article["FirstAuthor"]["LastName"]
+            last_author_fn = article["LastAuthor"]["FirstName"]
+            last_author_ln = article["LastAuthor"]["LastName"]
 
+            # Write the article details to the corresponding sheet
             ws.append([
                 article["Year"],
-                first_author,
-                last_author,
+                first_author_fn,
+                first_author_ln,
+                last_author_fn,
+                last_author_ln,
                 article["PMID"]
             ])
 
