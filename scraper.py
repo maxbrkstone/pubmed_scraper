@@ -5,9 +5,6 @@ from tqdm import tqdm
 import sys
 from http.client import HTTPException
 
-# Set your email address for Entrez
-Entrez.email = "my405@scarletmail.rutgers.edu"
-
 def search_pubmed(keywords=None, journal=None, terms=None):
     if  terms:
         max_terms = terms
@@ -131,7 +128,7 @@ def export_to_excel(keywords, articles, filename):
                 else:
                     ws = wb.create_sheet(title=keyword[0:31])
                 # Write the header row
-                ws.append(["Year", "1st Author First Name", "1st Author Last Name", "Last Author First Name" "Last Author Last Name", "PMID"])
+                ws.append(["Year", "1st Author First Name", "1st Author Last Name", "Last Author First Name", "Last Author Last Name", "PMID"])
                 keyword_articles[keyword] = ws
             else:
                 ws = keyword_articles[keyword]
@@ -157,7 +154,7 @@ def export_to_excel(keywords, articles, filename):
         ws = wb.active
 
         # Write the header row
-        ws.append(["Year", "1st Author First Name", "1st Author Last Name", "Last Author First Name" "Last Author Last Name", "PMID"])
+        ws.append(["Year", "1st Author First Name", "1st Author Last Name", "Last Author First Name", "Last Author Last Name", "PMID"])
 
         # Write the article details
         for article in articles:
@@ -184,12 +181,14 @@ def export_to_excel(keywords, articles, filename):
     print("Articles exported to " + filename + ".xlsx")
 
 def main():
+    # Set your email address for Entrez
+    Entrez.email = input("Email to use for PubMed search query: ") 
     # Prompt the user for search criteria
     keywords = input("Enter keywords (comma-separated): ")
     journal = input("Enter journal name (optional): ")
     terms = input("Enter search term limit (optional): ")
     filename = input("Enter filename for excel file ('articles' by default): ") 
-
+    
     if not keywords and not journal:
         print("Must provide at least one keyword or a journal name to search.")
         sys.exit(1)
