@@ -196,12 +196,15 @@ def main():
     if keywords:
         # Split the keywords into a formatted list
         keywords_list = [kw.strip() for kw in keywords.split(", ")]
-        
-    #Search PubMed
-    articles = search_pubmed(keywords_list, journal, terms)
-
-    # Export articles to Excel
-    export_to_excel(keywords_list, articles, filename)
+        #Search PubMed
+        articles = search_pubmed(keywords_list, journal, terms)
+        # Export articles to Excel
+        export_to_excel(keywords_list, articles, filename)
+    else:
+        articles = search_pubmed(None, journal, terms)
+        # Export articles to Excel
+        export_to_excel(None, articles, filename)
+    
 
 if __name__ == "__main__":
     main()
